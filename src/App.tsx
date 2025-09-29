@@ -37,9 +37,9 @@ interface UserInfo {
 }
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>('login');
+  const [currentScreen, setCurrentScreen]: [AppScreen, (screen: AppScreen) => void] = useState('login');
   const [walletBalance, setWalletBalance] = useState(5000);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
+  const [userInfo, setUserInfo]: [UserInfo, (info: UserInfo | ((prev: UserInfo) => UserInfo)) => void] = useState({
     name: 'John Doe',
     phone: '+91 98765 43210',
     email: 'john.doe@example.com',
@@ -47,7 +47,7 @@ export default function App() {
   });
 
   // Mock transaction data
-  const [transactions, setTransactions] = useState<Transaction[]>([
+  const [transactions, setTransactions]: [Transaction[], (transactions: Transaction[] | ((prev: Transaction[]) => Transaction[])) => void] = useState([
     {
       id: '1',
       type: 'credit',

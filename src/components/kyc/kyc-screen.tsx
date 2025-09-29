@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { ArrowLeft, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, CheckCircle, AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 
 interface KYCScreenProps {
@@ -24,10 +24,45 @@ export function KYCScreen({ onKYCComplete, onBack }: KYCScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileUpload = (file: File, type: 'front' | 'back') => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+    
     if (type === 'front') {
       setFrontImage(file);
     } else {
       setBackImage(file);
+    }
+  };
+
+  const handleRemoveFile = (type: 'front' | 'back') => {
+    if (type === 'front') {
+      setFrontImage(null);
+    } else {
+      setBackImage(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent, type: 'front' | 'back') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      handleFileUpload(files[0], type);
     }
   };
 
@@ -171,16 +206,38 @@ export function KYCScreen({ onKYCComplete, onBack }: KYCScreenProps) {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Front Side</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <div 
+                        className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, 'front')}
+                      >
                         {frontImage ? (
                           <div className="space-y-2">
-                            <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                            <p className="text-sm">{frontImage.name}</p>
+                            <div className="flex items-center justify-center gap-2">
+                              <CheckCircle className="h-8 w-8 text-green-500" />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFile('front');
+                                }}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <p className="text-sm font-medium">{frontImage.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {(frontImage.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           </div>
                         ) : (
                           <div className="space-y-2">
                             <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                            <p className="text-sm text-gray-600">Click to upload front side</p>
+                            <p className="text-sm text-gray-600">Click to upload or drag & drop</p>
+                            <p className="text-xs text-gray-500">Front side image</p>
                           </div>
                         )}
                         <input
@@ -194,16 +251,38 @@ export function KYCScreen({ onKYCComplete, onBack }: KYCScreenProps) {
 
                     <div className="space-y-2">
                       <Label>Back Side</Label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <div 
+                        className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, 'back')}
+                      >
                         {backImage ? (
                           <div className="space-y-2">
-                            <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                            <p className="text-sm">{backImage.name}</p>
+                            <div className="flex items-center justify-center gap-2">
+                              <CheckCircle className="h-8 w-8 text-green-500" />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFile('back');
+                                }}
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <p className="text-sm font-medium">{backImage.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {(backImage.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           </div>
                         ) : (
                           <div className="space-y-2">
                             <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                            <p className="text-sm text-gray-600">Click to upload back side</p>
+                            <p className="text-sm text-gray-600">Click to upload or drag & drop</p>
+                            <p className="text-xs text-gray-500">Back side image</p>
                           </div>
                         )}
                         <input
@@ -220,7 +299,7 @@ export function KYCScreen({ onKYCComplete, onBack }: KYCScreenProps) {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Please ensure images are clear, well-lit, and all text is readable.
+                    Please ensure images are clear, well-lit, and all text is readable. Supported formats: JPG, PNG, GIF. Maximum file size: 5MB.
                   </AlertDescription>
                 </Alert>
               </div>
