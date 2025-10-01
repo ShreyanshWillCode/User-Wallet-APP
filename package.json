@@ -2,6 +2,7 @@
   "name": "simple-user-wallet",
   "version": "1.0.0",
   "description": "A full-stack Simple User Wallet Web App with Node.js, Express, MongoDB, and React",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",

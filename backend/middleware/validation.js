@@ -30,14 +30,12 @@ export const validateUserRegistration = [
     .withMessage('Please provide a valid email address'),
   
   body('phone')
-    .matches(/^[\+]?[1-9][\d]{0,15}$/)
+    .matches(/^[\+]?[0-9][\d]{0,15}$/)
     .withMessage('Please provide a valid phone number'),
   
   body('password')
     .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .withMessage('Password must be at least 6 characters long'),
   
   handleValidationErrors
 ];

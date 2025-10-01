@@ -21,7 +21,7 @@ router.post('/signup', [
     .withMessage('Please provide a valid email address'),
   
   body('phone')
-    .matches(/^[\+]?[1-9][\d]{0,15}$/)
+    .matches(/^[\+]?[0-9][\d]{0,15}$/)
     .withMessage('Please provide a valid phone number'),
   
   body('password')

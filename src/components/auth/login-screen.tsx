@@ -32,11 +32,14 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
     }
   };
 
-  const handleSignup = async (method: 'phone' | 'email') => {
+  const handleSignup = async () => {
     try {
-      const data = method === 'phone'
-        ? { phone: signupPhone, password: signupPassword, name: signupName, email: '' }
-        : { email: signupEmail, password: signupPassword, name: signupName, phone: '' };
+      const data = {
+        name: signupName,
+        email: signupEmail,
+        phone: signupPhone,
+        password: signupPassword
+      };
       await signup(data);
       toast.success('Account created successfully!');
     } catch (error: any) {
@@ -157,6 +160,17 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="signup-phone" className="text-sm text-slate-900">Phone Number</Label>
+                  <Input
+                    id="signup-phone"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    className="bg-white rounded-[14px] border-0 h-9 text-sm"
+                    value={signupPhone}
+                    onChange={(e) => setSignupPhone(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-password" className="text-sm text-slate-900">Password</Label>
                   <Input
                     id="signup-password"
@@ -169,8 +183,8 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                 </div>
                 <Button 
                   className="w-full h-9 bg-blue-800 hover:bg-blue-900 text-white rounded-[14px] text-sm font-normal" 
-                  onClick={() => handleSignup('email')}
-                  disabled={!signupName || !signupEmail || !signupPassword || isLoading}
+                  onClick={handleSignup}
+                  disabled={!signupName || !signupEmail || !signupPhone || !signupPassword || isLoading}
                 >
                   {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>

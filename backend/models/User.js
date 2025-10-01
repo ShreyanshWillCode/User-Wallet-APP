@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     match: [
-      /^[\+]?[1-9][\d]{0,15}$/,
+      /^[\+]?[0-9][\d]{0,15}$/,
       'Please provide a valid phone number'
     ]
   },
