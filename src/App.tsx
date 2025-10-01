@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LoginScreen } from "./components/auth/login-screen";
 import { KYCScreen } from "./components/kyc/kyc-screen";
 import { WalletDashboard } from "./components/wallet/wallet-dashboard";
@@ -7,6 +7,9 @@ import { SendMoneyScreen } from "./components/wallet/send-money-screen";
 import { TransactionHistory } from "./components/wallet/transaction-history";
 import { WithdrawScreen } from "./components/wallet/withdraw-screen";
 import { ProfileScreen } from "./components/profile/profile-screen";
+import { useAuth } from "./contexts/AuthContext";
+import { walletAPI, transactionsAPI } from "./services/api";
+import toast from "react-hot-toast";
 
 type AppScreen = 
   | 'login' 
@@ -37,151 +40,138 @@ interface UserInfo {
 }
 
 export default function App() {
-  const [currentScreen, setCurrentScreen]: [AppScreen, (screen: AppScreen) => void] = useState('login');
-  const [walletBalance, setWalletBalance] = useState(5000);
-  const [userInfo, setUserInfo]: [UserInfo, (info: UserInfo | ((prev: UserInfo) => UserInfo)) => void] = useState({
-    name: 'John Doe',
-    phone: '+91 98765 43210',
-    email: 'john.doe@example.com',
-    kycStatus: 'verified'
-  });
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>('login');
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // Mock transaction data
-  const [transactions, setTransactions]: [Transaction[], (transactions: Transaction[] | ((prev: Transaction[]) => Transaction[])) => void] = useState([
-    {
-      id: '1',
-      type: 'credit',
-      amount: 1000,
-      description: 'Money added via UPI',
-      timestamp: new Date().toISOString(),
-      status: 'completed',
-      category: 'add_money'
-    },
-    {
-      id: '2',
-      type: 'debit',
-      amount: 500,
-      description: 'Money sent to Jane Smith',
-      timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      status: 'completed',
-      category: 'send_money',
-      recipient: 'Jane Smith'
-    },
-    {
-      id: '3',
-      type: 'credit',
-      amount: 2000,
-      description: 'Money added via Card',
-      timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-      status: 'completed',
-      category: 'add_money'
-    },
-    {
-      id: '4',
-      type: 'debit',
-      amount: 1500,
-      description: 'Withdrawal to bank account',
-      timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-      status: 'completed',
-      category: 'withdraw'
-    },
-    {
-      id: '5',
-      type: 'credit',
-      amount: 100,
-      description: 'Cashback refund',
-      timestamp: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-      status: 'completed',
-      category: 'refund'
+  // Load user data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadUserData();
     }
-  ]);
+  }, [isAuthenticated, user]);
 
-  const handleLogin = (credentials: { phone?: string; email?: string; password: string }) => {
-    // Mock login - in real app, this would authenticate with backend
-    if (credentials.phone) {
-      setUserInfo(prev => ({ ...prev, phone: credentials.phone! }));
-    }
-    if (credentials.email) {
-      setUserInfo(prev => ({ ...prev, email: credentials.email! }));
-    }
+  const loadUserData = async () => {
+    if (!user) return;
     
-    // Check if KYC is completed
-    if (userInfo.kycStatus === 'verified') {
+    setIsLoadingData(true);
+    try {
+      // Load wallet balance
+      const balanceResponse = await walletAPI.getBalance();
+      setWalletBalance(balanceResponse.data.balance);
+
+      // Load transactions
+      const transactionsResponse = await transactionsAPI.getTransactions({ limit: 20 });
+      const formattedTransactions = transactionsResponse.data.transactions.map((tx: any) => ({
+        id: tx._id,
+        type: tx.direction,
+        amount: tx.amount,
+        description: tx.description,
+        timestamp: tx.createdAt,
+        status: tx.status,
+        category: tx.type,
+        recipient: tx.receiverId?.name
+      }));
+      setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      toast.error('Failed to load user data');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Handle screen navigation based on authentication and KYC status
+  useEffect(() => {
+    if (isLoading) return; // Wait for auth to initialize
+    
+    if (!isAuthenticated) {
+      setCurrentScreen('login');
+    } else if (user) {
+      // Check KYC status and navigate accordingly
+      if (user.kycStatus === 'verified') {
       setCurrentScreen('dashboard');
     } else {
       setCurrentScreen('kyc');
     }
-  };
+    }
+  }, [isAuthenticated, user, isLoading]);
 
-  const handleSignup = (credentials: { phone?: string; email?: string; password: string; name: string }) => {
-    // Mock signup - in real app, this would create account with backend
-    setUserInfo({
-      name: credentials.name,
-      phone: credentials.phone || '',
-      email: credentials.email || '',
-      kycStatus: 'not_started'
-    });
-    setCurrentScreen('kyc');
-  };
-
-  const handleKYCComplete = () => {
-    setUserInfo(prev => ({ ...prev, kycStatus: 'verified' }));
+  const handleKYCComplete = async () => {
+    try {
+      // In a real app, you would call an API to update KYC status
+      // For now, we'll just refresh user data
+      await loadUserData();
     setCurrentScreen('dashboard');
+      toast.success('KYC verification completed!');
+    } catch (error) {
+      console.error('KYC completion error:', error);
+      toast.error('Failed to complete KYC verification');
+    }
   };
 
-  const handleAddMoneySuccess = (amount: number, method: string) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      type: 'credit',
+  const handleAddMoneySuccess = async (amount: number, method: string) => {
+    try {
+      await walletAPI.addMoney({ amount, paymentMethod: method });
+      await loadUserData(); // Refresh balance and transactions
+    setCurrentScreen('dashboard');
+      toast.success(`₹${amount} added successfully!`);
+    } catch (error: any) {
+      console.error('Add money error:', error);
+      toast.error(error.response?.data?.message || 'Failed to add money');
+    }
+  };
+
+  const handleSendMoneySuccess = async (amount: number, recipient: string) => {
+    try {
+      await walletAPI.transfer({ 
+        recipient, 
       amount,
-      description: `Money added via ${method}`,
-      timestamp: new Date().toISOString(),
-      status: 'completed',
-      category: 'add_money'
-    };
-    
-    setWalletBalance(prev => prev + amount);
-    setTransactions(prev => [newTransaction, ...prev]);
+        description: `Money sent to ${recipient}` 
+      });
+      await loadUserData(); // Refresh balance and transactions
     setCurrentScreen('dashboard');
+      toast.success(`₹${amount} sent to ${recipient} successfully!`);
+    } catch (error: any) {
+      console.error('Send money error:', error);
+      toast.error(error.response?.data?.message || 'Failed to send money');
+    }
   };
 
-  const handleSendMoneySuccess = (amount: number, recipient: string) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      type: 'debit',
-      amount,
-      description: `Money sent to ${recipient}`,
-      timestamp: new Date().toISOString(),
-      status: 'completed',
-      category: 'send_money',
-      recipient
-    };
-    
-    setWalletBalance(prev => prev - amount);
-    setTransactions(prev => [newTransaction, ...prev]);
+  const handleWithdrawSuccess = async (amount: number, account: string) => {
+    try {
+      // For withdrawal, we need bank details - this would come from the withdraw screen
+      // For now, we'll use mock bank details
+      const bankDetails = {
+        accountNumber: account,
+        ifscCode: 'SBIN0001234',
+        bankName: 'State Bank of India',
+        accountHolder: user?.name || 'User'
+      };
+      
+      await walletAPI.withdraw({ amount, bankDetails });
+      await loadUserData(); // Refresh balance and transactions
     setCurrentScreen('dashboard');
+      toast.success(`₹${amount} withdrawal initiated successfully!`);
+    } catch (error: any) {
+      console.error('Withdraw error:', error);
+      toast.error(error.response?.data?.message || 'Failed to initiate withdrawal');
+    }
   };
 
-  const handleWithdrawSuccess = (amount: number, account: string) => {
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      type: 'debit',
-      amount,
-      description: `Withdrawal to ${account}`,
-      timestamp: new Date().toISOString(),
-      status: 'pending',
-      category: 'withdraw'
-    };
-    
-    setWalletBalance(prev => prev - amount);
-    setTransactions(prev => [newTransaction, ...prev]);
-    setCurrentScreen('dashboard');
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logout();
     setCurrentScreen('login');
-    setWalletBalance(5000);
+      setWalletBalance(0);
     setTransactions([]);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    }
   };
 
   const renderScreen = () => {
@@ -189,8 +179,6 @@ export default function App() {
       case 'login':
         return (
           <LoginScreen
-            onLogin={handleLogin}
-            onSignup={handleSignup}
             onBack={() => setCurrentScreen('login')}
           />
         );
@@ -207,7 +195,7 @@ export default function App() {
         return (
           <WalletDashboard
             balance={walletBalance}
-            userName={userInfo.name}
+            userName={user?.name || 'User'}
             onAddMoney={() => setCurrentScreen('add-money')}
             onSendMoney={() => setCurrentScreen('send-money')}
             onWithdraw={() => setCurrentScreen('withdraw')}
@@ -256,7 +244,12 @@ export default function App() {
           <ProfileScreen
             onBack={() => setCurrentScreen('dashboard')}
             onLogout={handleLogout}
-            userInfo={userInfo}
+            userInfo={{
+              name: user?.name || '',
+              phone: user?.phone || '',
+              email: user?.email || '',
+              kycStatus: user?.kycStatus || 'not_started'
+            }}
           />
         );
       
@@ -264,6 +257,15 @@ export default function App() {
         return null;
     }
   };
+
+  // Show loading spinner while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="size-full">

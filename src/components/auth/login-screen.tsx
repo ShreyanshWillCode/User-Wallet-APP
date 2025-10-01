@@ -5,14 +5,15 @@ import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Shield, Mail, ArrowLeft, Wallet } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
 
 interface LoginScreenProps {
-  onLogin: (credentials: { phone?: string; email?: string; password: string }) => void;
-  onSignup: (credentials: { phone?: string; email?: string; password: string; name: string }) => void;
   onBack: () => void;
 }
 
-export function LoginScreen({ onLogin, onSignup, onBack }: LoginScreenProps) {
+export function LoginScreen({ onBack }: LoginScreenProps) {
+  const { login, signup, isLoading } = useAuth();
   const [loginPhone, setLoginPhone] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -21,18 +22,26 @@ export function LoginScreen({ onLogin, onSignup, onBack }: LoginScreenProps) {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
 
-  const handleLogin = (method: 'phone' | 'email') => {
-    const credentials = method === 'phone' 
-      ? { phone: loginPhone, password: loginPassword }
-      : { email: loginEmail, password: loginPassword };
-    onLogin(credentials);
+  const handleLogin = async (method: 'phone' | 'email') => {
+    try {
+      const identifier = method === 'phone' ? loginPhone : loginEmail;
+      await login(identifier, loginPassword);
+      toast.success('Login successful!');
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
+    }
   };
 
-  const handleSignup = (method: 'phone' | 'email') => {
-    const credentials = method === 'phone'
-      ? { phone: signupPhone, password: signupPassword, name: signupName }
-      : { email: signupEmail, password: signupPassword, name: signupName };
-    onSignup(credentials);
+  const handleSignup = async (method: 'phone' | 'email') => {
+    try {
+      const data = method === 'phone'
+        ? { phone: signupPhone, password: signupPassword, name: signupName, email: '' }
+        : { email: signupEmail, password: signupPassword, name: signupName, phone: '' };
+      await signup(data);
+      toast.success('Account created successfully!');
+    } catch (error: any) {
+      toast.error(error.message || 'Signup failed');
+    }
   };
 
   return (
@@ -109,9 +118,9 @@ export function LoginScreen({ onLogin, onSignup, onBack }: LoginScreenProps) {
                 <Button 
                   className="w-full h-9 bg-blue-800 hover:bg-blue-900 text-white rounded-[14px] text-sm font-normal" 
                   onClick={() => handleLogin('email')}
-                  disabled={!loginEmail || !loginPassword}
+                  disabled={!loginEmail || !loginPassword || isLoading}
                 >
-                  Sign In
+                  {isLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
                 <div className="text-center">
                   <Button 
@@ -161,9 +170,9 @@ export function LoginScreen({ onLogin, onSignup, onBack }: LoginScreenProps) {
                 <Button 
                   className="w-full h-9 bg-blue-800 hover:bg-blue-900 text-white rounded-[14px] text-sm font-normal" 
                   onClick={() => handleSignup('email')}
-                  disabled={!signupName || !signupEmail || !signupPassword}
+                  disabled={!signupName || !signupEmail || !signupPassword || isLoading}
                 >
-                  Create Account
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </div>
             </TabsContent>
