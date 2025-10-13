@@ -7,7 +7,6 @@ interface User {
   email: string;
   phone: string;
   walletBalance: number;
-  kycStatus: 'not_started' | 'pending' | 'verified';
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;

@@ -27,7 +27,6 @@ interface ProfileScreenProps {
     name: string;
     phone: string;
     email: string;
-    kycStatus: 'verified' | 'pending' | 'not_started';
   };
 }
 
@@ -42,23 +41,6 @@ export function ProfileScreen({ onBack, onLogout, userInfo }: ProfileScreenProps
     setIsEditing(false);
   };
 
-  const getKYCStatusColor = (status: string) => {
-    switch (status) {
-      case 'verified': return 'text-green-600 bg-green-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'not_started': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getKYCStatusText = (status: string) => {
-    switch (status) {
-      case 'verified': return 'Verified';
-      case 'pending': return 'Under Review';
-      case 'not_started': return 'Not Completed';
-      default: return 'Unknown';
-    }
-  };
 
   return (
     <div className="min-h-screen p-4 bg-[rgba(9,9,46,1)]">
@@ -120,9 +102,6 @@ export function ProfileScreen({ onBack, onLogout, userInfo }: ProfileScreenProps
                       <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
                         <Edit className="h-3 w-3" />
                       </Button>
-                    </div>
-                    <div className={`inline-block px-2 py-1 rounded-full text-xs ${getKYCStatusColor(userInfo.kycStatus)}`}>
-                      {getKYCStatusText(userInfo.kycStatus)}
                     </div>
                   </div>
                 )}

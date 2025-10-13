@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
-import { authenticate, requireKYC } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 import { handleValidationErrors } from '../middleware/validation.js';
 
 const router = express.Router();
@@ -103,7 +103,7 @@ router.post('/add', authenticate, [
 // @route   POST /api/wallet/transfer
 // @desc    Transfer money to another user
 // @access  Private
-router.post('/transfer', authenticate, requireKYC, [
+router.post('/transfer', authenticate, [
   body('recipient')
     .notEmpty()
     .withMessage('Recipient email or phone is required'),
@@ -224,7 +224,7 @@ router.post('/transfer', authenticate, requireKYC, [
 // @route   POST /api/wallet/withdraw
 // @desc    Withdraw money to bank account
 // @access  Private
-router.post('/withdraw', authenticate, requireKYC, [
+router.post('/withdraw', authenticate, [
   body('amount')
     .isFloat({ min: 1, max: 1000000 })
     .withMessage('Amount must be between ₹1 and ₹10,00,000'),

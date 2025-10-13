@@ -41,11 +41,6 @@ const userSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Wallet balance cannot be negative']
   },
-  kycStatus: {
-    type: String,
-    enum: ['not_started', 'pending', 'verified'],
-    default: 'not_started'
-  },
   isActive: {
     type: Boolean,
     default: true
@@ -68,9 +63,7 @@ userSchema.virtual('transactionCount', {
   count: true
 });
 
-// Index for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ phone: 1 });
+// Index for better query performance (email and phone already have unique indexes)
 userSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to hash password

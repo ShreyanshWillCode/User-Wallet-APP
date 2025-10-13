@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { LoginScreen } from "./components/auth/login-screen";
-import { KYCScreen } from "./components/kyc/kyc-screen";
 import { WalletDashboard } from "./components/wallet/wallet-dashboard";
 import { AddMoneyScreen } from "./components/wallet/add-money-screen";
 import { SendMoneyScreen } from "./components/wallet/send-money-screen";
@@ -13,7 +12,6 @@ import toast from "react-hot-toast";
 
 type AppScreen = 
   | 'login' 
-  | 'kyc' 
   | 'dashboard' 
   | 'add-money' 
   | 'send-money' 
@@ -36,7 +34,6 @@ interface UserInfo {
   name: string;
   phone: string;
   email: string;
-  kycStatus: 'verified' | 'pending' | 'not_started';
 }
 
 export default function App() {
@@ -83,34 +80,17 @@ export default function App() {
     }
   };
 
-  // Handle screen navigation based on authentication and KYC status
+  // Handle screen navigation based on authentication status
   useEffect(() => {
     if (isLoading) return; // Wait for auth to initialize
     
     if (!isAuthenticated) {
       setCurrentScreen('login');
     } else if (user) {
-      // Check KYC status and navigate accordingly
-      if (user.kycStatus === 'verified') {
       setCurrentScreen('dashboard');
-    } else {
-      setCurrentScreen('kyc');
-    }
     }
   }, [isAuthenticated, user, isLoading]);
 
-  const handleKYCComplete = async () => {
-    try {
-      // In a real app, you would call an API to update KYC status
-      // For now, we'll just refresh user data
-      await loadUserData();
-    setCurrentScreen('dashboard');
-      toast.success('KYC verification completed!');
-    } catch (error) {
-      console.error('KYC completion error:', error);
-      toast.error('Failed to complete KYC verification');
-    }
-  };
 
   const handleAddMoneySuccess = async (amount: number, method: string) => {
     try {
@@ -183,14 +163,6 @@ export default function App() {
           />
         );
       
-      case 'kyc':
-        return (
-          <KYCScreen
-            onKYCComplete={handleKYCComplete}
-            onBack={() => setCurrentScreen('login')}
-          />
-        );
-      
       case 'dashboard':
         return (
           <WalletDashboard
@@ -247,8 +219,7 @@ export default function App() {
             userInfo={{
               name: user?.name || '',
               phone: user?.phone || '',
-              email: user?.email || '',
-              kycStatus: user?.kycStatus || 'not_started'
+              email: user?.email || ''
             }}
           />
         );

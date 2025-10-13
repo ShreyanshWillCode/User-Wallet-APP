@@ -85,7 +85,7 @@ transactionSchema.index({ senderId: 1, createdAt: -1 });
 transactionSchema.index({ receiverId: 1, createdAt: -1 });
 transactionSchema.index({ type: 1, status: 1 });
 transactionSchema.index({ createdAt: -1 });
-transactionSchema.index({ reference: 1 }, { unique: true, sparse: true });
+// Reference index is already defined in schema with unique: true, sparse: true
 
 // Virtual for transaction direction
 transactionSchema.virtual('direction').get(function() {
