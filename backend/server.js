@@ -20,8 +20,24 @@ dotenv.config();
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// --- SECURITY MIDDLEWARE ---
+// Enhanced helmet configuration with proper CSP
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -29,15 +45,37 @@ const limiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// --- SECURE CORS CONFIGURATION ---
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      /^https:\/\/.*\.vercel\.app$/,
+      'https://vercel.app'
+    ];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed patterns
+    if (allowedOrigins.some(pattern => 
+      pattern instanceof RegExp ? pattern.test(origin) : pattern === origin
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Logging middleware
 app.use(morgan('combined'));
@@ -115,20 +153,21 @@ process.on('SIGTERM', async () => {
   }
 });
 
-// Handle unhandled promise rejections
+// --- SECURE ERROR HANDLING ---
+// Handle unhandled promise rejections - always exit for critical errors
 process.on('unhandledRejection', (err, promise) => {
-  console.log('❌ Unhandled Promise Rejection:', err.message);
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
+  console.error('❌ Unhandled Promise Rejection:', err.message);
+  console.error('Stack:', err.stack);
+  // Always exit on unhandled rejections to prevent undefined behavior
+  process.exit(1);
 });
 
-// Handle uncaught exceptions
+// Handle uncaught exceptions - always exit for critical errors
 process.on('uncaughtException', (err) => {
-  console.log('❌ Uncaught Exception:', err.message);
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
+  console.error('❌ Uncaught Exception:', err.message);
+  console.error('Stack:', err.stack);
+  // Always exit on uncaught exceptions to prevent undefined behavior
+  process.exit(1);
 });
 
 // Start the server (only for local development)

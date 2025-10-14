@@ -6,13 +6,13 @@ Add these environment variables in your Vercel dashboard under Settings > Enviro
 
 ### Database Configuration
 ```
-MONGODB_URI=mongodb+srv://E-Wallet:Shrey%40nsh12@cluster0.0nlbf3w.mongodb.net/wallet_app?retryWrites=true&w=majority&appName=Cluster0
-MONGODB_TEST_URI=mongodb+srv://E-Wallet:Shrey%40nsh12@cluster0.0nlbf3w.mongodb.net/wallet_app_test?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority&appName=<appName>
+MONGODB_TEST_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>_test?retryWrites=true&w=majority&appName=<appName>
 ```
 
 ### JWT Configuration
 ```
-JWT_SECRET=S4WrJpC6Zp5aK6iPhjPcXvUH9DSTelRz2/zA73qMQzyZFynlIGNI5hRKqVJSFtsWjpRYG9Zmhkbu4x7xGLGBbA==
+JWT_SECRET=<your_secure_base64_encoded_secret_minimum_256_bits>
 JWT_EXPIRE=7d
 ```
 
@@ -51,7 +51,34 @@ RATE_LIMIT_MAX_REQUESTS=100
 
 ## Security Notes
 
-- Never commit these values to your repository
-- Use strong, unique values for JWT_SECRET
-- Keep your MongoDB credentials secure
+- **CRITICAL**: Never commit these values to your repository
+- **CRITICAL**: Use strong, unique values for JWT_SECRET (minimum 256 bits)
+- **CRITICAL**: Keep your MongoDB credentials secure and rotate them regularly
+- **CRITICAL**: Replace all placeholders with your actual secure credentials
+- **CRITICAL**: For local development, copy `backend/env.example` to `backend/.env` with your actual values
 - Rotate secrets regularly in production
+- Use environment-specific values for different deployment stages
+- Monitor for unauthorized access attempts
+
+## Getting Your Secure Values
+
+### For Local Development:
+1. Copy `backend/env.example` to `backend/.env`
+2. The `.env` file contains your actual secure values
+3. Never commit the `.env` file to version control
+
+### For Vercel Deployment:
+1. Use the values from your local `backend/.env` file
+2. Add them to Vercel environment variables
+3. Replace placeholders with your actual secure credentials
+
+### Generate a new JWT secret:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+```
+
+### MongoDB Atlas Security:
+1. Create a dedicated database user with minimal required permissions
+2. Use strong passwords (minimum 12 characters with mixed case, numbers, symbols)
+3. Enable IP whitelisting for production
+4. Enable MongoDB Atlas encryption at rest and in transit

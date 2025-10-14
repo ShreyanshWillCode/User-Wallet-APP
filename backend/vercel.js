@@ -20,14 +20,27 @@ dotenv.config();
 
 const app = express();
 
-// Security middleware
+// --- SECURITY MIDDLEWARE ---
+// Enhanced helmet configuration with proper CSP for serverless
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
 }));
 app.use(morgan('combined'));
 
-// Rate limiting - more lenient for serverless
+// Rate limiting - optimized for serverless environment
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // Increased for serverless
@@ -37,13 +50,27 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration for Vercel
+// --- SECURE CORS CONFIGURATION FOR VERCEL ---
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'https://*.vercel.app',
-    'https://vercel.app'
-  ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      /^https:\/\/.*\.vercel\.app$/,
+      'https://vercel.app'
+    ];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches allowed patterns
+    if (allowedOrigins.some(pattern => 
+      pattern instanceof RegExp ? pattern.test(origin) : pattern === origin
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };

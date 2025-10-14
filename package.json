@@ -5,6 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "setup": "node setup-env.js",
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "backend:dev": "cd backend && npm run dev",
     "frontend:dev": "vite",
