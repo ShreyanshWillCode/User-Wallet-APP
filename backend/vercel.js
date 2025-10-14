@@ -21,26 +21,33 @@ dotenv.config();
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false,
+}));
+app.use(morgan('combined'));
 
-// Rate limiting
+// Rate limiting - more lenient for serverless
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.'
-  }
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Increased for serverless
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
-
-// Logging middleware
-app.use(morgan('combined'));
+// CORS configuration for Vercel
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://*.vercel.app',
+    'https://vercel.app'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -48,11 +55,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'Wallet API is running',
+  res.json({ 
+    status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV,
+    platform: 'vercel'
   });
 });
 
@@ -61,8 +68,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// Error handling middleware
+// 404 handler
 app.use(notFound);
+
+// Error handler
 app.use(errorHandler);
 
 // Database connection with serverless optimization
@@ -74,11 +83,7 @@ const connectDB = async () => {
   }
 
   try {
-    const mongoURI = process.env.NODE_ENV === 'test' 
-      ? process.env.MONGODB_TEST_URI 
-      : process.env.MONGODB_URI;
-    
-    const conn = await mongoose.connect(mongoURI, {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 10, // Maintain up to 10 socket connections
       serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
@@ -94,18 +99,8 @@ const connectDB = async () => {
   }
 };
 
-// Start server
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
-  await connectDB();
-  
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  });
-};
+// Connect to database on startup
+connectDB().catch(console.error);
 
 // Handle serverless function cleanup
 process.on('SIGTERM', async () => {
@@ -114,27 +109,6 @@ process.on('SIGTERM', async () => {
     cachedConnection = null;
   }
 });
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log('❌ Unhandled Promise Rejection:', err.message);
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.log('❌ Uncaught Exception:', err.message);
-  if (process.env.NODE_ENV !== 'production') {
-    process.exit(1);
-  }
-});
-
-// Start the server (only for local development)
-if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'production') {
-  startServer();
-}
 
 // Export for Vercel
 export default app;
