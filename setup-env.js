@@ -27,10 +27,17 @@ try {
   // Check if target file already exists
   if (fs.existsSync(targetFile)) {
     console.log('⚠️  Warning: backend/.env already exists');
-    console.log('   The existing .env file will be backed up to .env.backup');
+    console.log('   The existing .env file will be backed up with timestamp');
     
-    // Backup existing .env file
-    const backupFile = targetFile + '.backup';
+    // Create timestamped backup to avoid overwriting
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupFile = `${targetFile}.backup.${timestamp}`;
+    
+    // Check if backup already exists and warn
+    if (fs.existsSync(backupFile)) {
+      console.log('   Note: Previous backup will be overwritten');
+    }
+    
     fs.copyFileSync(targetFile, backupFile);
     console.log(`   Backup created: ${backupFile}`);
   }

@@ -21,20 +21,23 @@ dotenv.config();
 const app = express();
 
 // --- SECURITY MIDDLEWARE ---
-// Enhanced helmet configuration with proper CSP
+// Enhanced helmet configuration with secure CSP
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://cdn.jsdelivr.net", "https://unpkg.com"],
       connectSrc: ["'self'"],
-      fontSrc: ["'self'", "https:", "data:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
     },
   },
 }));
@@ -56,12 +59,20 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
       'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173', // Vite default port
+      'http://127.0.0.1:5173',
       /^https:\/\/.*\.vercel\.app$/,
       'https://vercel.app'
     ];
     
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+    // Allow no-origin requests in development
+    if (!origin) {
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    }
     
     // Check if origin matches allowed patterns
     if (allowedOrigins.some(pattern => 
@@ -69,6 +80,7 @@ const corsOptions = {
     )) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -76,6 +88,26 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+
+// Additional security middleware for no-origin requests in production
+app.use((req, res, next) => {
+  // Only apply this check in production and for requests without origin
+  if (process.env.NODE_ENV === 'production' && !req.headers.origin) {
+    const safeEndpoints = ['/health', '/api/health'];
+    const isSafeEndpoint = safeEndpoints.some(endpoint => req.path.startsWith(endpoint));
+    
+    // Block no-origin requests to sensitive endpoints in production
+    if (!isSafeEndpoint) {
+      return res.status(403).json({
+        success: false,
+        message: 'Origin required for this endpoint in production',
+        error: 'CORS_ORIGIN_REQUIRED'
+      });
+    }
+  }
+  
+  next();
+});
 
 // Logging middleware
 app.use(morgan('combined'));
