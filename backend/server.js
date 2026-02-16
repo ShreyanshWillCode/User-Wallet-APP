@@ -129,6 +129,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// --- DATABASE CONNECTION FOR SERVERLESS ---
+// Connect to MongoDB before routes (critical for Vercel serverless)
+// Uses cached connection to avoid reconnecting on every request
+await connectDB();
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
