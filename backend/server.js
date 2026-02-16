@@ -42,6 +42,9 @@ app.use(helmet({
   },
 }));
 
+// Trust proxy for Vercel/serverless environments
+app.set('trust proxy', 1);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
