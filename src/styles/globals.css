@@ -387,6 +387,41 @@
     color: #ffffff;
   }
 
+  /* Dialog overrides - CRITICAL for visibility */
+  [data-slot="dialog-content"] {
+    background: #ffffff !important;
+    color: #1B1B1B !important;
+  }
+
+  [data-slot="dialog-content"] * {
+    color: inherit !important;
+  }
+
+  [data-slot="dialog-title"] {
+    color: #1B1B1B !important;
+  }
+
+  [data-slot="dialog-description"] {
+    color: #6B7280 !important;
+  }
+
+  [data-slot="dialog-content"] h1,
+  [data-slot="dialog-content"] h2,
+  [data-slot="dialog-content"] h3,
+  [data-slot="dialog-content"] h4,
+  [data-slot="dialog-content"] p,
+  [data-slot="dialog-content"] span,
+  [data-slot="dialog-content"] div {
+    color: #1B1B1B !important;
+  }
+
+  [data-slot="dialog-content"] label {
+    color: #1B1B1B !important;
+  }
+
+  [data-slot="dialog-overlay"] {
+    background: rgba(0, 0, 0, 0.8) !important;
+  }
 
 }
 

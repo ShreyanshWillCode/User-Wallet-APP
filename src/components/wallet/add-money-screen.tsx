@@ -303,41 +303,58 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center space-y-2">
+            <DialogTitle style={{ color: '#1B1B1B' }} className="text-2xl font-bold text-gray-900">Confirm Payment</DialogTitle>
+            <DialogDescription style={{ color: '#6B7280' }} className="text-gray-600">
               Please review your payment details
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-              <div className="flex justify-between">
-                <span>Amount:</span>
-                <span>₹{amount}</span>
+          <div className="space-y-4 py-4">
+            {/* Payment Details Card */}
+            <div className="bg-purple-50 p-5 rounded-2xl space-y-3">
+              <div className="flex justify-between items-center text-gray-700">
+                <span style={{ color: '#374151' }} className="font-medium">Amount</span>
+                <span style={{ color: '#1B1B1B' }} className="font-bold text-lg">₹{amount}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Payment Method:</span>
+              <div className="flex justify-between items-center text-gray-700">
+                <span style={{ color: '#374151' }} className="font-medium">Payment Method:</span>
                 <div className="flex items-center gap-2">
                   {getPaymentIcon(paymentMethod)}
-                  <span>{getPaymentLabel(paymentMethod)}</span>
+                  <span style={{ color: '#1B1B1B' }} className="font-semibold">{getPaymentLabel(paymentMethod)}</span>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <span>Processing Fee:</span>
-                <span>₹0</span>
+              <div className="flex justify-between items-center text-gray-700">
+                <span style={{ color: '#374151' }} className="font-medium">Processing Fee:</span>
+                <span style={{ color: '#1B1B1B' }} className="font-semibold">₹0</span>
               </div>
-              <hr />
-              <div className="flex justify-between">
-                <span>Total:</span>
-                <span>₹{amount}</span>
+              <div className="border-t border-purple-200 pt-3 mt-3">
+                <div className="flex justify-between items-center">
+                  <span style={{ color: '#1B1B1B' }} className="font-bold text-gray-900">Total:</span>
+                  <span style={{ color: '#1B1B1B' }} className="font-bold text-xl text-gray-900">₹{amount}</span>
+                </div>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmation(false)} className="flex-1">
+            
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowConfirmation(false)} 
+                style={{ color: '#1B1B1B' }}
+                className="flex-1 h-12 rounded-xl border-2 hover:bg-gray-50 font-semibold text-gray-900"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleConfirm} disabled={isProcessing} className="flex-1">
+              <Button 
+                onClick={handleConfirm} 
+                disabled={isProcessing}
+                style={{ 
+                  background: 'linear-gradient(to right, rgb(147, 51, 234), rgb(168, 85, 247))',
+                  color: '#ffffff'
+                }}
+                className="flex-1 h-12 rounded-xl hover:from-purple-700 hover:to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              >
                 {isProcessing ? "Processing..." : "Confirm Payment"}
               </Button>
             </div>
