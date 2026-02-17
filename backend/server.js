@@ -10,6 +10,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import walletRoutes from './routes/wallet.js';
 import transactionRoutes from './routes/transactions.js';
+import paymentRoutes from './routes/payment.js';
 
 // Middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -129,6 +130,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/payment', paymentRoutes);
 
 /* ===============================
    ERROR HANDLING
