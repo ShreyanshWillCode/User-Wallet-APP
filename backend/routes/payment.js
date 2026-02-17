@@ -199,10 +199,10 @@ router.post('/create-order', authenticate, async (req, res) => {
     const { amount } = req.body;
     const userId = req.user._id; // From authenticate middleware
 
-    if (!amount || amount < 10) {
+    if (!amount || amount < 1) {
       return res.status(400).json({ 
         success: false,
-        error: 'Invalid amount. Minimum ₹10 required.' 
+        error: 'Invalid amount. Minimum ₹1 required.' 
       });
     }
 

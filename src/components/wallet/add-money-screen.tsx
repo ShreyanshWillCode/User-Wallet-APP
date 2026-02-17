@@ -29,8 +29,8 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
   const handlePayment = async () => {
     const amountNum = parseInt(amount);
     
-    if (amountNum < 10) {
-      setError("Minimum amount is ₹10");
+    if (amountNum < 1) {
+      setError("Minimum amount is ₹1");
       return;
     }
 
@@ -64,7 +64,7 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
 
   const isFormValid = () => {
     const amountNum = parseInt(amount);
-    return amount && amountNum >= 10 && amountNum <= 100000;
+    return amount && amountNum >= 1 && amountNum <= 100000;
   };
 
   return (
@@ -133,11 +133,11 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
               )}
 
               {/* Validation Message */}
-              {amount && parseInt(amount) < 10 && (
+              {amount && parseInt(amount) < 1 && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Minimum amount to add is ₹10
+                    Minimum amount to add is ₹1
                   </AlertDescription>
                 </Alert>
               )}
