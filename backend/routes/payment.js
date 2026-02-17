@@ -210,10 +210,13 @@ router.post('/create-order', authenticate, async (req, res) => {
     }
 
     // Create real Razorpay order
+    // Receipt must be under 40 characters (Razorpay requirement)
+    const shortReceipt = `rcpt_${crypto.randomBytes(6).toString('hex')}`;
+    
     const options = {
       amount: Math.round(amount * 100), // Convert to paise and ensure integer
       currency: 'INR',
-      receipt: `receipt_${userId}_${Date.now()}`,
+      receipt: shortReceipt, // Max 40 chars
       notes: {
         userId: userId.toString(),
         purpose: 'wallet_recharge'
