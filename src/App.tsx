@@ -94,13 +94,14 @@ export default function App() {
 
   const handleAddMoneySuccess = async (amount: number, method: string) => {
     try {
-      await walletAPI.addMoney({ amount, paymentMethod: method });
+      // Payment already processed by Razorpay webhook
+      // Just refresh balance and transactions from backend
       await loadUserData(); // Refresh balance and transactions
-    setCurrentScreen('dashboard');
+      setCurrentScreen('dashboard');
       toast.success(`₹${amount} added successfully!`);
     } catch (error: any) {
-      console.error('Add money error:', error);
-      toast.error(error.response?.data?.message || 'Failed to add money');
+      console.error('Refresh data error:', error);
+      toast.error('Payment successful, but failed to refresh balance. Please refresh the page.');
     }
   };
 
