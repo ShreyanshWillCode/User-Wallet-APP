@@ -219,88 +219,70 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-  <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-3xl shadow-2xl border-0">
+        <DialogContent className="sm:max-w-2xl rounded-[2rem] border-0 bg-white p-0 shadow-[0_30px_80px_rgba(20,13,68,0.35)]">
+          <div className="px-6 pt-10 pb-8 sm:px-9">
+            <div className="text-center">
+              <DialogTitle className="text-3xl font-bold text-slate-900">
+                Confirm Payment
+              </DialogTitle>
+              <DialogDescription className="mt-3 text-lg text-slate-600">
+                Please review your payment details.
+              </DialogDescription>
+            </div>
 
-    {/* Header */}
-    <div className="px-8 pt-8 pb-4 text-center">
-      <DialogTitle className="text-2xl font-bold text-gray-900">
-        Confirm Transaction
-      </DialogTitle>
-      <DialogDescription className="text-gray-500 mt-2 text-base">
-        Please review your transaction details.
-      </DialogDescription>
-    </div>
+              <div className="mt-8 rounded-[1.75rem] bg-[#eeebf9] px-5 py-6 sm:px-8">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between text-slate-900">
+                    <span className="text-xl text-slate-600 sm:text-2xl">Amount</span>
+                    <span className="text-2xl font-semibold sm:text-3xl">
+                      {formatCurrency(parseInt(amount))}
+                    </span>
+                  </div>
 
-    {/* Details Card */}
-    <div className="px-8 pb-6">
-      <div className="bg-gradient-to-br from-purple-100 to-purple-50 p-6 rounded-2xl space-y-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl text-slate-600 sm:text-2xl">Payment Method:</span>
+                    <span className="flex items-center gap-3 text-2xl font-semibold text-slate-900 sm:text-3xl">
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-violet-700 to-violet-500 text-white sm:h-8 sm:w-8">
+                        <CheckCircle className="h-5 w-5" />
+                      </span>
+                      UPI
+                    </span>
+                  </div>
 
-        {/* Recipient */}
-        <div className="text-center">
-          <Avatar className="h-14 w-14 mx-auto mb-3 shadow-md">
-            <AvatarFallback className="bg-purple-600 text-white font-semibold">
-              {recipientName.split(' ').map(n => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          <p className="font-semibold text-gray-900">{recipientName}</p>
-          <p className="text-sm text-gray-500">{recipient}</p>
-        </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl text-slate-600 sm:text-2xl">Processing Fee:</span>
+                    <span className="text-2xl font-semibold text-slate-900 sm:text-3xl">Rs 0</span>
+                  </div>
+                </div>
 
-        <div className="border-t border-purple-200"></div>
+              <div className="my-6 h-px bg-[#d8d2f3]" />
 
-        {/* Amount */}
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600 font-medium">Amount</span>
-          <span className="text-xl font-bold text-gray-900">
-            {formatCurrency(parseInt(amount))}
-          </span>
-        </div>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-slate-900 sm:text-3xl">Total:</span>
+                <span className="text-2xl font-bold text-slate-900 sm:text-3xl">{formatCurrency(parseInt(amount))}</span>
+              </div>
+            </div>
 
-        {/* Optional Note */}
-        {note && (
-          <div className="flex justify-between items-start">
-            <span className="text-gray-600 font-medium">Note</span>
-            <span className="text-sm text-gray-500 text-right max-w-[60%]">
-              {note}
-            </span>
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirmation(false)}
+                className="h-14 rounded-2xl border-2 border-[#d8c9f8] bg-white text-xl font-semibold text-slate-900 hover:bg-[#f8f4ff] sm:text-2xl"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={handleConfirm}
+                disabled={isProcessing}
+                className="h-14 rounded-2xl border-0 bg-gradient-to-r from-[#7f3ff2] to-[#9b4dff] px-4 text-xl font-semibold text-white shadow-[0_10px_24px_rgba(127,63,242,0.35)] hover:brightness-105 sm:text-2xl"
+              >
+                {isProcessing ? "Sending..." : "Confirm Payment"}
+              </Button>
+            </div>
           </div>
-        )}
-
-        <div className="border-t border-purple-200 pt-4">
-          <div className="flex justify-between items-center">
-            <span className="font-bold text-gray-900">Total</span>
-            <span className="text-2xl font-bold text-gray-900">
-              {formatCurrency(parseInt(amount))}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Buttons */}
-    <div className="px-8 pb-8 flex gap-4">
-      <Button
-        variant="outline"
-        onClick={() => setShowConfirmation(false)}
-        className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-semibold hover:bg-gray-50"
-      >
-        Cancel
-      </Button>
-
-      <Button
-        onClick={handleConfirm}
-        disabled={isProcessing}
-        className="flex-1 h-12 rounded-xl font-semibold text-white 
-                   bg-gradient-to-r from-purple-600 to-purple-500 
-                   hover:from-purple-700 hover:to-purple-600
-                   shadow-lg hover:shadow-xl transition-all duration-200"
-      >
-        {isProcessing ? "Sending..." : "Send Money"}
-      </Button>
-    </div>
-
-  </DialogContent>
-</Dialog>
+        </DialogContent>
+      </Dialog>
 
 
       {/* Success Dialog */}
