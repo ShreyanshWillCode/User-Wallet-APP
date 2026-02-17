@@ -75,21 +75,22 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
 
   const handleConfirm = async () => {
     setIsProcessing(true);
-    // Simulate transaction processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
     setShowConfirmation(false);
     
-    // Simulate 95% success rate
-    if (Math.random() > 0.05) {
+    try {
+      // Call the real API through onSuccess callback
+      // App.tsx will handle the actual API call to backend
+      await onSuccess(parseInt(amount), recipient);
       setShowSuccess(true);
-    } else {
+    } catch (error) {
+      console.error('Transfer error:', error);
       setShowError(true);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleSuccess = () => {
-    onSuccess(parseInt(amount), recipient);
     setShowSuccess(false);
   };
 
