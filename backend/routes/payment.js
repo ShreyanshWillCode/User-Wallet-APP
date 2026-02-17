@@ -1,11 +1,18 @@
 import express from 'express';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import mongoose from 'mongoose';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Initialize Razorpay instance
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 
 /**
  * @route   POST /api/payment/webhook
@@ -186,27 +193,52 @@ async function handlePaymentFailed(paymentData) {
 router.post('/create-order', authenticate, async (req, res) => {
   try {
     const { amount } = req.body;
-    const userId = req.user.id; // From authenticate middleware
+    const userId = req.user._id; // From authenticate middleware
 
     if (!amount || amount < 10) {
-      return res.status(400).json({ error: 'Invalid amount. Minimum ₹10 required.' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid amount. Minimum ₹10 required.' 
+      });
     }
 
-    // Here you would integrate with Razorpay SDK to create order
-    // For now, returning a mock response
-    const order = {
-      id: `order_${Date.now()}`,
-      amount: amount * 100, // Convert to paise
+    if (amount > 100000) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Maximum amount is ₹1,00,000' 
+      });
+    }
+
+    // Create real Razorpay order
+    const options = {
+      amount: Math.round(amount * 100), // Convert to paise and ensure integer
       currency: 'INR',
+      receipt: `receipt_${userId}_${Date.now()}`,
       notes: {
-        userId: userId
+        userId: userId.toString(),
+        purpose: 'wallet_recharge'
       }
     };
 
-    res.json({ success: true, order });
+    const order = await razorpay.orders.create(options);
+
+    console.log('✅ Razorpay order created:', order.id);
+
+    res.json({ 
+      success: true, 
+      order: {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key_id: process.env.RAZORPAY_KEY_ID // Send key_id to frontend
+      }
+    });
   } catch (error) {
-    console.error('❌ Error creating order:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    console.error('❌ Error creating Razorpay order:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to create payment order. Please try again.' 
+    });
   }
 });
 
