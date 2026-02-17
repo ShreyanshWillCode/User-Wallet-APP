@@ -93,6 +93,13 @@ app.use(
 ================================= */
 
 app.use(morgan('combined'));
+
+// CRITICAL: Webhook raw body parser MUST come BEFORE express.json()
+// This prevents express.json() from parsing the webhook body,
+// which would break signature verification
+app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+
+// Now apply JSON parser for all other routes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

@@ -2,6 +2,8 @@ import express from 'express';
 import crypto from 'crypto';
 import Wallet from '../models/Wallet.js';
 import Transaction from '../models/Transaction.js';
+import mongoose from 'mongoose';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -9,8 +11,11 @@ const router = express.Router();
  * @route   POST /api/payment/webhook
  * @desc    Razorpay webhook handler for payment events
  * @access  Public (but verified with signature)
+ * 
+ * CRITICAL: Raw body parser is applied in server.js BEFORE express.json()
+ * Do NOT add express.raw() here or it will be applied twice
  */
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/webhook', async (req, res) => {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers['x-razorpay-signature'];
@@ -20,14 +25,21 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       return res.status(500).json({ error: 'Webhook secret not configured' });
     }
 
-    // Verify webhook signature
+    // Get raw body (already parsed by express.raw() in server.js)
     const body = req.body.toString();
+    
+    // Generate expected signature
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
       .update(body)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    // SECURITY FIX: Use timing-safe comparison to prevent timing attacks
+    const signatureBuffer = Buffer.from(signature || '', 'utf8');
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    
+    if (signatureBuffer.length !== expectedBuffer.length || 
+        !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       console.error('❌ Invalid webhook signature');
       return res.status(400).json({ error: 'Invalid signature' });
     }
@@ -67,32 +79,52 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
 /**
  * Handle successful payment capture
+ * PRODUCTION FIXES:
+ * - Idempotency check to prevent double credit
+ * - Atomic transaction using MongoDB session
  */
 async function handlePaymentCaptured(paymentData) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { id, amount, notes } = paymentData;
     const userId = notes?.userId;
 
     if (!userId) {
       console.error('❌ No userId in payment notes');
+      await session.abortTransaction();
+      return;
+    }
+
+    // IDEMPOTENCY CHECK: Prevent duplicate processing
+    const existingTxn = await Transaction.findOne({
+      razorpayPaymentId: id,
+      status: 'completed'
+    }).session(session);
+
+    if (existingTxn) {
+      console.log('⚠️ Payment already processed:', id);
+      await session.abortTransaction();
       return;
     }
 
     // Convert amount from paise to rupees
     const amountInRupees = amount / 100;
 
-    // Update wallet balance
-    const wallet = await Wallet.findOne({ user: userId });
+    // Update wallet balance (with session for atomicity)
+    const wallet = await Wallet.findOne({ user: userId }).session(session);
     if (!wallet) {
       console.error('❌ Wallet not found for user:', userId);
+      await session.abortTransaction();
       return;
     }
 
     wallet.balance += amountInRupees;
-    await wallet.save();
+    await wallet.save({ session });
 
-    // Create transaction record
-    await Transaction.create({
+    // Create transaction record (with session for atomicity)
+    await Transaction.create([{
       user: userId,
       type: 'credit',
       amount: amountInRupees,
@@ -100,11 +132,17 @@ async function handlePaymentCaptured(paymentData) {
       paymentMethod: 'razorpay',
       status: 'completed',
       razorpayPaymentId: id
-    });
+    }], { session });
 
+    // Commit the transaction
+    await session.commitTransaction();
     console.log(`✅ Payment captured: ₹${amountInRupees} added to wallet`);
   } catch (error) {
+    await session.abortTransaction();
     console.error('❌ Error handling payment capture:', error);
+    throw error;
+  } finally {
+    session.endSession();
   }
 }
 
@@ -141,15 +179,15 @@ async function handlePaymentFailed(paymentData) {
 /**
  * @route   POST /api/payment/create-order
  * @desc    Create Razorpay order for payment
- * @access  Private
+ * @access  Private (requires authentication)
  */
-router.post('/create-order', async (req, res) => {
+router.post('/create-order', protect, async (req, res) => {
   try {
     const { amount } = req.body;
-    const userId = req.user?.id; // Assuming you have auth middleware
+    const userId = req.user.id; // From protect middleware
 
     if (!amount || amount < 10) {
-      return res.status(400).json({ error: 'Invalid amount' });
+      return res.status(400).json({ error: 'Invalid amount. Minimum ₹10 required.' });
     }
 
     // Here you would integrate with Razorpay SDK to create order
