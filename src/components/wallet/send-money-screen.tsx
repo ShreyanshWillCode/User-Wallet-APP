@@ -219,63 +219,70 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-2xl rounded-[2rem] border-0 bg-white p-0 shadow-[0_30px_80px_rgba(20,13,68,0.35)]">
-          <div className="px-6 pt-10 pb-8 sm:px-9">
-            <div className="text-center">
-              <DialogTitle className="text-3xl font-bold text-slate-900">
+        <DialogContent className="sm:max-w-md rounded-3xl border-0 bg-white p-8 shadow-2xl">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <DialogTitle className="text-2xl font-bold text-gray-900">
                 Confirm Payment
               </DialogTitle>
-              <DialogDescription className="mt-3 text-lg text-slate-600">
+              <DialogDescription className="text-base text-gray-600">
                 Please review your payment details.
               </DialogDescription>
             </div>
 
-              <div className="mt-8 rounded-[1.75rem] bg-[#eeebf9] px-5 py-6 sm:px-8">
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between text-slate-900">
-                    <span className="text-xl text-slate-600 sm:text-2xl">Amount</span>
-                    <span className="text-2xl font-semibold sm:text-3xl">
-                      {formatCurrency(parseInt(amount))}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl text-slate-600 sm:text-2xl">Payment Method:</span>
-                    <span className="flex items-center gap-3 text-2xl font-semibold text-slate-900 sm:text-3xl">
-                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-violet-700 to-violet-500 text-white sm:h-8 sm:w-8">
-                        <CheckCircle className="h-5 w-5" />
-                      </span>
-                      UPI
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl text-slate-600 sm:text-2xl">Processing Fee:</span>
-                    <span className="text-2xl font-semibold text-slate-900 sm:text-3xl">Rs 0</span>
-                  </div>
-                </div>
-
-              <div className="my-6 h-px bg-[#d8d2f3]" />
-
+            {/* Payment Details Box */}
+            <div className="rounded-2xl bg-purple-50 p-6 space-y-4">
+              {/* Amount */}
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-slate-900 sm:text-3xl">Total:</span>
-                <span className="text-2xl font-bold text-slate-900 sm:text-3xl">{formatCurrency(parseInt(amount))}</span>
+                <span className="text-lg text-gray-700">Amount</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(parseInt(amount))}
+                </span>
+              </div>
+
+              {/* Payment Method */}
+              <div className="flex items-center justify-between">
+                <span className="text-lg text-gray-700">Payment Method:</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded bg-purple-600">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-lg font-semibold text-gray-900">UPI</span>
+                </div>
+              </div>
+
+              {/* Processing Fee */}
+              <div className="flex items-center justify-between">
+                <span className="text-lg text-gray-700">Processing Fee:</span>
+                <span className="text-lg font-semibold text-gray-900">₹0</span>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-purple-200 pt-4">
+                {/* Total */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-gray-900">Total:</span>
+                  <span className="text-xl font-bold text-gray-900">
+                    {formatCurrency(parseInt(amount))}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Buttons */}
+            <div className="grid grid-cols-2 gap-4">
               <Button
                 variant="outline"
                 onClick={() => setShowConfirmation(false)}
-                className="h-14 rounded-2xl border-2 border-[#d8c9f8] bg-white text-xl font-semibold text-slate-900 hover:bg-[#f8f4ff] sm:text-2xl"
+                className="h-12 rounded-2xl border-2 border-gray-200 bg-white text-base font-semibold text-gray-900 hover:bg-gray-50"
               >
                 Cancel
               </Button>
-
               <Button
                 onClick={handleConfirm}
                 disabled={isProcessing}
-                className="h-14 rounded-2xl border-0 bg-gradient-to-r from-[#7f3ff2] to-[#9b4dff] px-4 text-xl font-semibold text-white shadow-[0_10px_24px_rgba(127,63,242,0.35)] hover:brightness-105 sm:text-2xl"
+                className="h-12 rounded-2xl border-0 bg-gradient-to-r from-purple-600 to-purple-500 text-base font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60"
               >
                 {isProcessing ? "Sending..." : "Confirm Payment"}
               </Button>
