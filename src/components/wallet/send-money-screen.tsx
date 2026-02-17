@@ -219,49 +219,89 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle style={{ color: '#1B1B1B' }}>Confirm Transaction</DialogTitle>
-            <DialogDescription style={{ color: '#6B7280' }}>
-              Please review the transaction details
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-              <div className="text-center">
-                <Avatar className="h-12 w-12 mx-auto mb-2">
-                  <AvatarFallback>
-                    {recipientName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <p style={{ color: '#1B1B1B' }}>{recipientName}</p>
-                <p className="text-sm" style={{ color: '#6B7280' }}>{recipient}</p>
-              </div>
-              <hr />
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span style={{ color: '#374151' }}>Amount:</span>
-                  <span className="text-lg" style={{ color: '#1B1B1B' }}>{formatCurrency(parseInt(amount))}</span>
-                </div>
-                {note && (
-                  <div className="flex justify-between">
-                    <span style={{ color: '#374151' }}>Note:</span>
-                    <span className="text-sm" style={{ color: '#6B7280' }}>{note}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmation(false)} className="flex-1" style={{ color: '#1B1B1B' }}>
-                Cancel
-              </Button>
-              <Button onClick={handleConfirm} disabled={isProcessing} className="flex-1">
-                {isProcessing ? "Sending..." : "Send Money"}
-              </Button>
-            </div>
+  <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-3xl shadow-2xl border-0">
+
+    {/* Header */}
+    <div className="px-8 pt-8 pb-4 text-center">
+      <DialogTitle className="text-2xl font-bold text-gray-900">
+        Confirm Transaction
+      </DialogTitle>
+      <DialogDescription className="text-gray-500 mt-2 text-base">
+        Please review your transaction details.
+      </DialogDescription>
+    </div>
+
+    {/* Details Card */}
+    <div className="px-8 pb-6">
+      <div className="bg-gradient-to-br from-purple-100 to-purple-50 p-6 rounded-2xl space-y-5">
+
+        {/* Recipient */}
+        <div className="text-center">
+          <Avatar className="h-14 w-14 mx-auto mb-3 shadow-md">
+            <AvatarFallback className="bg-purple-600 text-white font-semibold">
+              {recipientName.split(' ').map(n => n[0]).join('')}
+            </AvatarFallback>
+          </Avatar>
+          <p className="font-semibold text-gray-900">{recipientName}</p>
+          <p className="text-sm text-gray-500">{recipient}</p>
+        </div>
+
+        <div className="border-t border-purple-200"></div>
+
+        {/* Amount */}
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600 font-medium">Amount</span>
+          <span className="text-xl font-bold text-gray-900">
+            {formatCurrency(parseInt(amount))}
+          </span>
+        </div>
+
+        {/* Optional Note */}
+        {note && (
+          <div className="flex justify-between items-start">
+            <span className="text-gray-600 font-medium">Note</span>
+            <span className="text-sm text-gray-500 text-right max-w-[60%]">
+              {note}
+            </span>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+
+        <div className="border-t border-purple-200 pt-4">
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-gray-900">Total</span>
+            <span className="text-2xl font-bold text-gray-900">
+              {formatCurrency(parseInt(amount))}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Buttons */}
+    <div className="px-8 pb-8 flex gap-4">
+      <Button
+        variant="outline"
+        onClick={() => setShowConfirmation(false)}
+        className="flex-1 h-12 rounded-xl border-2 border-gray-200 font-semibold hover:bg-gray-50"
+      >
+        Cancel
+      </Button>
+
+      <Button
+        onClick={handleConfirm}
+        disabled={isProcessing}
+        className="flex-1 h-12 rounded-xl font-semibold text-white 
+                   bg-gradient-to-r from-purple-600 to-purple-500 
+                   hover:from-purple-700 hover:to-purple-600
+                   shadow-lg hover:shadow-xl transition-all duration-200"
+      >
+        {isProcessing ? "Sending..." : "Send Money"}
+      </Button>
+    </div>
+
+  </DialogContent>
+</Dialog>
+
 
       {/* Success Dialog */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
