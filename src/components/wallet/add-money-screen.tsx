@@ -3,10 +3,10 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
-import { ArrowLeft, CreditCard, Smartphone, Building, CheckCircle, AlertCircle, QrCode } from "lucide-react";
+import { ArrowLeft, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
+import { initiateRazorpayPayment } from "../../utils/razorpay";
 
 interface AddMoneyScreenProps {
   onBack: () => void;
@@ -15,85 +15,56 @@ interface AddMoneyScreenProps {
 
 export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [upiId, setUpiId] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showQR, setShowQR] = useState(false);
-  const [qrPaymentId, setQrPaymentId] = useState("");
+  const [error, setError] = useState("");
 
   const quickAmounts = [500, 1000, 2000, 5000];
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmount(quickAmount.toString());
+    setError("");
   };
 
-  const handleConfirm = async () => {
+  const handlePayment = async () => {
+    const amountNum = parseInt(amount);
+    
+    if (amountNum < 10) {
+      setError("Minimum amount is ₹10");
+      return;
+    }
+
+    if (amountNum > 100000) {
+      setError("Maximum amount is ₹1,00,000");
+      return;
+    }
+
     setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    setIsProcessing(false);
-    setShowConfirmation(false);
-    setShowSuccess(true);
+    setError("");
+
+    await initiateRazorpayPayment(
+      amountNum,
+      () => {
+        // Payment successful
+        setIsProcessing(false);
+        setShowSuccess(true);
+      },
+      (errorMsg) => {
+        // Payment failed
+        setIsProcessing(false);
+        setError(errorMsg);
+      }
+    );
   };
 
   const handleSuccess = () => {
-    onSuccess(parseInt(amount), paymentMethod);
+    onSuccess(parseInt(amount), 'razorpay');
     setShowSuccess(false);
   };
 
-  const getPaymentIcon = (method: string) => {
-    switch (method) {
-      case 'upi': return <Smartphone className="h-5 w-5" />;
-      case 'card': return <CreditCard className="h-5 w-5" />;
-      case 'netbanking': return <Building className="h-5 w-5" />;
-      case 'qr': return <QrCode className="h-5 w-5" />;
-      default: return null;
-    }
-  };
-
-  const getPaymentLabel = (method: string) => {
-    switch (method) {
-      case 'upi': return 'UPI';
-      case 'card': return 'Debit/Credit Card';
-      case 'netbanking': return 'Net Banking';
-      case 'qr': return 'QR Code';
-      default: return '';
-    }
-  };
-
-  const handleQRPayment = () => {
-    // Generate a mock payment ID for QR
-    const paymentId = `QR${Date.now()}${Math.floor(Math.random() * 1000)}`;
-    setQrPaymentId(paymentId);
-    setShowQR(true);
-  };
-
-  const handleQRComplete = () => {
-    setShowQR(false);
-    setShowConfirmation(true);
-  };
-
   const isFormValid = () => {
-    if (!amount || !paymentMethod) return false;
-    
-    switch (paymentMethod) {
-      case 'upi':
-        return upiId.trim() !== '';
-      case 'card':
-        return cardNumber && cardExpiry && cardCvv && cardName;
-      case 'netbanking':
-        return true;
-      case 'qr':
-        return true;
-      default:
-        return false;
-    }
+    const amountNum = parseInt(amount);
+    return amount && amountNum >= 10 && amountNum <= 100000;
   };
 
   return (
@@ -153,6 +124,15 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Validation Message */}
               {amount && parseInt(amount) < 10 && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -163,251 +143,31 @@ export function AddMoneyScreen({ onBack, onSuccess }: AddMoneyScreenProps) {
               )}
             </div>
 
-            {/* Payment Method */}
-            <div className="space-y-3">
-              <Label>Select Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="upi">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="h-4 w-4" />
-                      UPI
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="card">
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      Debit/Credit Card
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="netbanking">
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      Net Banking
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="qr">
-                    <div className="flex items-center gap-2">
-                      <QrCode className="h-4 w-4" />
-                      QR Code Payment
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Payment Info */}
+            <Alert>
+              <AlertDescription className="text-sm">
+                You will be redirected to Razorpay's secure payment gateway to complete the transaction.
+              </AlertDescription>
+            </Alert>
 
-            {/* Payment Method Details */}
-            {paymentMethod === 'upi' && (
-              <div className="space-y-2">
-                <Label htmlFor="upi-id">UPI ID</Label>
-                <Input
-                  id="upi-id"
-                  placeholder="example@upi"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                />
-              </div>
-            )}
-
-            {paymentMethod === 'card' && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="card-number">Card Number</Label>
-                  <Input
-                    id="card-number"
-                    placeholder="1234 5678 9012 3456"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    maxLength={19}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="card-expiry">Expiry</Label>
-                    <Input
-                      id="card-expiry"
-                      placeholder="MM/YY"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                      maxLength={5}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-cvv">CVV</Label>
-                    <Input
-                      id="card-cvv"
-                      placeholder="123"
-                      value={cardCvv}
-                      onChange={(e) => setCardCvv(e.target.value)}
-                      maxLength={3}
-                      type="password"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="card-name">Cardholder Name</Label>
-                  <Input
-                    id="card-name"
-                    placeholder="Name on card"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-
-            {paymentMethod === 'netbanking' && (
-              <Alert>
-                <Building className="h-4 w-4" />
-                <AlertDescription>
-                  You will be redirected to your bank's website to complete the payment.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {paymentMethod === 'qr' && (
-              <div className="space-y-4">
-                <Alert>
-                  <QrCode className="h-4 w-4" />
-                  <AlertDescription>
-                    Scan the QR code with any UPI app to make the payment instantly.
-                  </AlertDescription>
-                </Alert>
-                <div className="text-center space-y-2">
-                  <div className="text-sm text-tertiary-light font-medium">Or</div>
-                  <Button
-                    variant="outline"
-                    onClick={handleQRPayment}
-                    className="primary-gradient text-white border-0 hover:scale-105 transition-all duration-300"
-                  >
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Generate QR Code
-                  </Button>
-                </div>
-              </div>
-            )}
-
+            {/* Pay Button */}
             <Button 
               className="w-full h-14 primary-gradient border-0 button-glow hover:scale-105 transition-all duration-300 rounded-2xl text-lg font-bold" 
-              onClick={() => paymentMethod === 'qr' ? handleQRPayment() : setShowConfirmation(true)}
-              disabled={!isFormValid() || parseInt(amount) < 10}
+              onClick={handlePayment}
+              disabled={!isFormValid() || isProcessing}
             >
-              {paymentMethod === 'qr' ? 'Generate QR & Pay' : `Add ₹${amount || 0} to Wallet`}
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Pay ₹${amount || 0}`
+              )}
             </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="text-center space-y-2">
-            <DialogTitle style={{ color: '#1B1B1B' }} className="text-2xl font-bold text-gray-900">Confirm Payment</DialogTitle>
-            <DialogDescription style={{ color: '#6B7280' }} className="text-gray-600">
-              Please review your payment details
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Payment Details Card */}
-            <div className="bg-purple-50 p-5 rounded-2xl space-y-3">
-              <div className="flex justify-between items-center text-gray-700">
-                <span style={{ color: '#374151' }} className="font-medium">Amount</span>
-                <span style={{ color: '#1B1B1B' }} className="font-bold text-lg">₹{amount}</span>
-              </div>
-              <div className="flex justify-between items-center text-gray-700">
-                <span style={{ color: '#374151' }} className="font-medium">Payment Method:</span>
-                <div className="flex items-center gap-2">
-                  {getPaymentIcon(paymentMethod)}
-                  <span style={{ color: '#1B1B1B' }} className="font-semibold">{getPaymentLabel(paymentMethod)}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-gray-700">
-                <span style={{ color: '#374151' }} className="font-medium">Processing Fee:</span>
-                <span style={{ color: '#1B1B1B' }} className="font-semibold">₹0</span>
-              </div>
-              <div className="border-t border-purple-200 pt-3 mt-3">
-                <div className="flex justify-between items-center">
-                  <span style={{ color: '#1B1B1B' }} className="font-bold text-gray-900">Total:</span>
-                  <span style={{ color: '#1B1B1B' }} className="font-bold text-xl text-gray-900">₹{amount}</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowConfirmation(false)} 
-                style={{ color: '#1B1B1B' }}
-                className="flex-1 h-12 rounded-xl border-2 hover:bg-gray-50 font-semibold text-gray-900"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleConfirm} 
-                disabled={isProcessing}
-                style={{ 
-                  background: 'linear-gradient(to right, rgb(147, 51, 234), rgb(168, 85, 247))',
-                  color: '#ffffff'
-                }}
-                className="flex-1 h-12 rounded-xl hover:from-purple-700 hover:to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                {isProcessing ? "Processing..." : "Confirm Payment"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* QR Code Dialog */}
-      <Dialog open={showQR} onOpenChange={setShowQR}>
-        <DialogContent className="text-center max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="gradient-text">Scan QR Code</DialogTitle>
-            <DialogDescription>
-              Scan with any UPI app to pay ₹{amount}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* Mock QR Code */}
-            <div className="mx-auto w-48 h-48 bg-white rounded-2xl p-4 shadow-xl border-2 border-gray-100">
-              <div className="w-full h-full bg-gradient-to-br from-slate-900 to-slate-700 rounded-xl flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-2 border-2 border-white/20 rounded-lg"></div>
-                <div className="text-white space-y-1 text-center">
-                  <QrCode className="h-16 w-16 mx-auto mb-2" />
-                  <div className="text-xs font-mono opacity-80">QR Code</div>
-                  <div className="text-xs font-mono opacity-60">₹{amount}</div>
-                </div>
-                {/* Decorative QR-like squares */}
-                <div className="absolute top-2 left-2 w-3 h-3 bg-white rounded-sm"></div>
-                <div className="absolute top-2 right-2 w-3 h-3 bg-white rounded-sm"></div>
-                <div className="absolute bottom-2 left-2 w-3 h-3 bg-white rounded-sm"></div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-sm text-slate-600">Payment ID</div>
-              <div className="font-mono text-xs bg-slate-100 p-2 rounded-lg">{qrPaymentId}</div>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowQR(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleQRComplete} className="flex-1 success-gradient text-white">
-                Payment Done
-              </Button>
-            </div>
-            
-            <div className="text-xs text-slate-500">
-              Click "Payment Done" after completing the payment in your UPI app
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Success Dialog */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
