@@ -221,8 +221,8 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Transaction</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: '#1B1B1B' }}>Confirm Transaction</DialogTitle>
+            <DialogDescription style={{ color: '#6B7280' }}>
               Please review the transaction details
             </DialogDescription>
           </DialogHeader>
@@ -234,25 +234,25 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                     {recipientName.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
-                <p>{recipientName}</p>
-                <p className="text-sm text-muted-foreground">{recipient}</p>
+                <p style={{ color: '#1B1B1B' }}>{recipientName}</p>
+                <p className="text-sm" style={{ color: '#6B7280' }}>{recipient}</p>
               </div>
               <hr />
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Amount:</span>
-                  <span className="text-lg">{formatCurrency(parseInt(amount))}</span>
+                  <span style={{ color: '#374151' }}>Amount:</span>
+                  <span className="text-lg" style={{ color: '#1B1B1B' }}>{formatCurrency(parseInt(amount))}</span>
                 </div>
                 {note && (
                   <div className="flex justify-between">
-                    <span>Note:</span>
-                    <span className="text-sm text-muted-foreground">{note}</span>
+                    <span style={{ color: '#374151' }}>Note:</span>
+                    <span className="text-sm" style={{ color: '#6B7280' }}>{note}</span>
                   </div>
                 )}
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmation(false)} className="flex-1">
+              <Button variant="outline" onClick={() => setShowConfirmation(false)} className="flex-1" style={{ color: '#1B1B1B' }}>
                 Cancel
               </Button>
               <Button onClick={handleConfirm} disabled={isProcessing} className="flex-1">
