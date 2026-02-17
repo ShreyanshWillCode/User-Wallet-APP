@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import mongoose from 'mongoose';
-import { protect } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -183,10 +183,10 @@ async function handlePaymentFailed(paymentData) {
  * @desc    Create Razorpay order for payment
  * @access  Private (requires authentication)
  */
-router.post('/create-order', protect, async (req, res) => {
+router.post('/create-order', authenticate, async (req, res) => {
   try {
     const { amount } = req.body;
-    const userId = req.user.id; // From protect middleware
+    const userId = req.user.id; // From authenticate middleware
 
     if (!amount || amount < 10) {
       return res.status(400).json({ error: 'Invalid amount. Minimum ₹10 required.' });
