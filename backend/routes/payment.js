@@ -132,13 +132,17 @@ async function handlePaymentCaptured(paymentData) {
     await user.save({ session });
 
     // Create transaction record (with session for atomicity)
+    // Use actual payment method from Razorpay (upi/card/netbanking)
+    const paymentMethod = paymentData.method || 'card'; // Default to card if not provided
+    
     await Transaction.create([{
       senderId: userId,
       amount: amountInRupees,
       type: 'add_money',
       status: 'completed',
       description: `Money added via Razorpay (${id})`,
-      paymentMethod: 'razorpay',
+      paymentMethod: paymentMethod, // Actual method: upi, card, netbanking
+      paymentGateway: 'razorpay',   // Payment gateway used
       razorpayPaymentId: id,
       processedAt: new Date()
     }], { session });

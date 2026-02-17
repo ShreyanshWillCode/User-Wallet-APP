@@ -56,6 +56,16 @@ const transactionSchema = new mongoose.Schema({
       return this.type === 'add_money';
     }
   },
+  paymentGateway: {
+    type: String,
+    enum: ['razorpay', 'manual'],
+    default: 'manual'
+  },
+  razorpayPaymentId: {
+    type: String,
+    sparse: true,
+    index: true
+  },
   bankDetails: {
     accountNumber: String,
     ifscCode: String,
