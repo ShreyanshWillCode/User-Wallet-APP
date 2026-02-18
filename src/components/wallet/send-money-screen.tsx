@@ -275,17 +275,18 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
               <Button
                 variant="outline"
                 onClick={() => setShowConfirmation(false)}
-                className="h-12 rounded-2xl border-2 border-gray-200 bg-white text-base font-semibold text-gray-900 hover:bg-gray-50"
+                className="h-12 rounded-2xl border-2 border-gray-200 bg-white font-semibold hover:bg-gray-50"
               >
-                Cancel
+                <span style={{ color: '#1B1B1B', fontSize: '1rem' }}>Cancel</span>
               </Button>
               <Button
                 onClick={handleConfirm}
                 disabled={isProcessing}
-                className="h-12 rounded-2xl border-0 bg-gradient-to-r from-purple-600 to-purple-500 text-base font-semibold shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60"
-                style={{ color: '#FFFFFF' }}
+                className="h-12 rounded-2xl border-0 bg-gradient-to-r from-purple-600 to-purple-500 font-semibold shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60"
               >
-                {isProcessing ? "Sending..." : "Confirm Payment"}
+                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                  {isProcessing ? "Sending..." : "Confirm Payment"}
+                </span>
               </Button>
             </div>
           </div>
