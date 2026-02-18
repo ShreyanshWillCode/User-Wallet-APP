@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LoginScreen } from "./components/auth/login-screen";
+import { LoadingScreen } from "./components/auth/loading-screen";
 import { WalletDashboard } from "./components/wallet/wallet-dashboard";
 import { AddMoneyScreen } from "./components/wallet/add-money-screen";
 import { SendMoneyScreen } from "./components/wallet/send-money-screen";
@@ -42,6 +43,8 @@ export default function App() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(false);
+  const wasAuthenticated = useRef(false);
 
   // Load user data when authenticated
   useEffect(() => {
@@ -86,8 +89,20 @@ export default function App() {
     
     if (!isAuthenticated) {
       setCurrentScreen('login');
+      wasAuthenticated.current = false;
     } else if (user) {
-      setCurrentScreen('dashboard');
+      // Only show loading screen on fresh login, not on page refresh
+      if (!wasAuthenticated.current) {
+        wasAuthenticated.current = true;
+        setShowLoadingScreen(true);
+        // Show loading screen for at least 2.5 seconds
+        setTimeout(() => {
+          setShowLoadingScreen(false);
+          setCurrentScreen('dashboard');
+        }, 2500);
+      } else {
+        setCurrentScreen('dashboard');
+      }
     }
   }, [isAuthenticated, user, isLoading]);
 
@@ -241,6 +256,7 @@ export default function App() {
 
   return (
     <div className="size-full">
+      {showLoadingScreen && <LoadingScreen userName={user?.name} />}
       {renderScreen()}
     </div>
   );
