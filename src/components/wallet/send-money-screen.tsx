@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
-import { ArrowLeft, Send, CheckCircle, AlertCircle, User, Smartphone, AtSign } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, AlertCircle, User, Smartphone, AtSign, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
@@ -31,6 +31,10 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
   const [showError, setShowError] = useState(false);
   const [recipientName, setRecipientName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Wallet");
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [recipientType, setRecipientType] = useState<'wallet' | 'external' | null>(null);
+  const [processingFeeOverride, setProcessingFeeOverride] = useState<number | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mock recent contacts
   const recentContacts: Contact[] = [
@@ -54,27 +58,48 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
     }
   };
 
-  const validateRecipient = (value: string) => {
-    // Simple validation - in real app, this would check with backend
-    if (value.includes('@')) {
-      setRecipientName('UPI User');
-      setPaymentMethod('UPI');
-    } else if (value.startsWith('+91') || value.match(/^\d+$/)) {
-      setRecipientName('Phone User');
-      setPaymentMethod('Phone / IMPS');
-    } else {
-      setRecipientName('Wallet User');
-      setPaymentMethod('Wallet');
+  // Debounced backend lookup — checks if recipient is a wallet user or external
+  const lookupRecipient = (value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (value.length < 5) {
+      setRecipientName('');
+      setRecipientType(null);
+      setProcessingFeeOverride(null);
+      return;
     }
+
+    setIsLookingUp(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(
+          `/api/wallet/check-recipient?identifier=${encodeURIComponent(value)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          setRecipientName(data.data.name || (data.data.type === 'wallet' ? 'Wallet User' : 'External User'));
+          setPaymentMethod(data.data.paymentMethod);
+          setRecipientType(data.data.type);
+          setProcessingFeeOverride(data.data.fee);
+        }
+      } catch {
+        // Fallback to format-based detection
+        if (value.includes('@')) {
+          setRecipientName('UPI User'); setPaymentMethod('UPI'); setRecipientType('external'); setProcessingFeeOverride(3);
+        } else {
+          setRecipientName('External User'); setPaymentMethod('Phone / IMPS'); setRecipientType('external'); setProcessingFeeOverride(5);
+        }
+      } finally {
+        setIsLookingUp(false);
+      }
+    }, 600);
   };
 
   const handleRecipientChange = (value: string) => {
     setRecipient(value);
-    if (value.length > 5) {
-      validateRecipient(value);
-    } else {
-      setRecipientName('');
-    }
+    lookupRecipient(value);
   };
 
   const handleConfirm = async () => {
@@ -175,10 +200,23 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                 value={recipient}
                 onChange={(e) => handleRecipientChange(e.target.value)}
               />
-              {recipientName && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Sending to: {recipientName}</span>
+              {/* Recipient lookup status */}
+              {isLookingUp && (
+                <div className="flex items-center gap-2 text-sm" style={{ color: '#6B7280' }}>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Looking up recipient...</span>
+                </div>
+              )}
+              {!isLookingUp && recipientName && recipientType === 'wallet' && (
+                <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg" style={{ backgroundColor: '#d1fae5', color: '#065f46' }}>
+                  <CheckCircle className="h-4 w-4" />
+                  <span><strong>{recipientName}</strong> · Wallet user · <strong>Free transfer ✓</strong></span>
+                </div>
+              )}
+              {!isLookingUp && recipientName && recipientType === 'external' && (
+                <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>
+                  <AlertCircle className="h-4 w-4" />
+                  <span>External transfer via {paymentMethod} · Fee: <strong>₹{processingFeeOverride}</strong></span>
                 </div>
               )}
             </div>
@@ -278,9 +316,9 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
               {/* Processing Fee */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#374151', fontSize: '1.05rem' }}>Processing Fee:</span>
-                <span style={{ color: getProcessingFee(paymentMethod, parseInt(amount)) > 0 ? '#dc2626' : '#111827', fontSize: '1.05rem', fontWeight: 600 }}>
-                  {getProcessingFee(paymentMethod, parseInt(amount)) > 0
-                    ? `+ ₹${getProcessingFee(paymentMethod, parseInt(amount))}`
+                <span style={{ color: (processingFeeOverride ?? 0) > 0 ? '#dc2626' : '#059669', fontSize: '1.05rem', fontWeight: 600 }}>
+                  {(processingFeeOverride ?? 0) > 0
+                    ? `+ ₹${processingFeeOverride}`
                     : '₹0 (Free)'}
                 </span>
               </div>
@@ -290,7 +328,7 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>Total:</span>
                   <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>
-                    {formatCurrency(parseInt(amount) + getProcessingFee(paymentMethod, parseInt(amount)))}
+                    {formatCurrency(parseInt(amount) + (processingFeeOverride ?? 0))}
                   </span>
                 </div>
               </div>

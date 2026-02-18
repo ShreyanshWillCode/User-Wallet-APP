@@ -30,6 +30,59 @@ router.get('/balance', authenticate, async (req, res) => {
   }
 });
 
+// @route   GET /api/wallet/check-recipient
+// @desc    Check if a recipient (phone/email) is a wallet user or external
+// @access  Private
+router.get('/check-recipient', authenticate, async (req, res) => {
+  try {
+    const { identifier } = req.query;
+
+    if (!identifier || identifier.trim().length < 5) {
+      return res.status(400).json({ success: false, message: 'Identifier too short' });
+    }
+
+    // Don't allow looking up yourself
+    const sender = req.user;
+    if (sender.email === identifier.trim() || sender.phone === identifier.trim()) {
+      return res.status(400).json({ success: false, message: 'Cannot send to yourself' });
+    }
+
+    // Check if recipient exists in wallet system
+    const recipient = await User.findByEmailOrPhone(identifier.trim());
+
+    if (recipient && recipient.isActive) {
+      return res.json({
+        success: true,
+        data: {
+          exists: true,
+          type: 'wallet',
+          name: recipient.name,
+          fee: 0,
+          paymentMethod: 'Wallet'
+        }
+      });
+    }
+
+    // Not a wallet user — determine external method from identifier format
+    const isUPI = identifier.includes('@');
+    return res.json({
+      success: true,
+      data: {
+        exists: false,
+        type: 'external',
+        name: null,
+        fee: isUPI ? 3 : 5,
+        paymentMethod: isUPI ? 'UPI' : 'Phone / IMPS'
+      }
+    });
+
+  } catch (error) {
+    console.error('Check recipient error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
 // @route   POST /api/wallet/add
 // @desc    Add money to wallet (simulated payment)
 // @access  Private
