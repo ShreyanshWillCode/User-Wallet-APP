@@ -219,51 +219,51 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-md rounded-3xl border-0 bg-white p-8 shadow-2xl">
-          <div className="space-y-6">
+        <DialogContent className="sm:max-w-md rounded-3xl border-0 p-8 shadow-2xl" style={{ backgroundColor: '#ffffff' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
             {/* Header */}
-            <div className="text-center space-y-2">
-              <DialogTitle className="text-2xl font-bold text-gray-900">
+            <div style={{ textAlign: 'center' }}>
+              <DialogTitle style={{ color: '#111827', fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px' }}>
                 Confirm Payment
               </DialogTitle>
-              <DialogDescription className="text-base text-gray-600">
+              <DialogDescription style={{ color: '#6B7280', fontSize: '1rem' }}>
                 Please review your payment details.
               </DialogDescription>
             </div>
 
             {/* Payment Details Box */}
-            <div className="rounded-2xl bg-purple-50 p-6 space-y-4">
+            <div style={{ backgroundColor: '#f3f0ff', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Amount */}
-              <div className="flex items-center justify-between">
-                <span className="text-lg text-gray-700">Amount</span>
-                <span className="text-lg font-semibold text-gray-900">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#374151', fontSize: '1.05rem' }}>Amount</span>
+                <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>
                   {formatCurrency(parseInt(amount))}
                 </span>
               </div>
 
               {/* Payment Method */}
-              <div className="flex items-center justify-between">
-                <span className="text-lg text-gray-700">Payment Method:</span>
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded bg-purple-600">
-                    <CheckCircle className="h-4 w-4 text-white" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#374151', fontSize: '1.05rem' }}>Payment Method:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '24px', height: '24px', backgroundColor: '#7c3aed', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle style={{ width: '14px', height: '14px', color: '#ffffff' }} />
                   </div>
-                  <span className="text-lg font-semibold text-gray-900">UPI</span>
+                  <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>UPI</span>
                 </div>
               </div>
 
               {/* Processing Fee */}
-              <div className="flex items-center justify-between">
-                <span className="text-lg text-gray-700">Processing Fee:</span>
-                <span className="text-lg font-semibold text-gray-900">₹0</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#374151', fontSize: '1.05rem' }}>Processing Fee:</span>
+                <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>₹0</span>
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-purple-200 pt-4">
-                {/* Total */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-xl font-bold text-gray-900">
+              {/* Divider + Total */}
+              <div style={{ borderTop: '1px solid #ddd6fe', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>Total:</span>
+                  <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>
                     {formatCurrency(parseInt(amount))}
                   </span>
                 </div>
@@ -271,23 +271,31 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
             </div>
 
             {/* Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant="outline"
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <button
                 onClick={() => setShowConfirmation(false)}
-                className="h-12 rounded-2xl border-2 border-gray-200 bg-white font-semibold hover:bg-gray-50"
+                style={{
+                  height: '48px', borderRadius: '16px',
+                  border: '2px solid #e5e7eb', backgroundColor: '#ffffff',
+                  color: '#111827', fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
+                }}
               >
-                <span style={{ color: '#1B1B1B', fontSize: '1rem' }}>Cancel</span>
-              </Button>
-              <Button
+                Cancel
+              </button>
+              <button
                 onClick={handleConfirm}
                 disabled={isProcessing}
-                className="h-12 rounded-2xl border-0 bg-gradient-to-r from-purple-600 to-purple-500 font-semibold shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60"
+                style={{
+                  height: '48px', borderRadius: '16px', border: 'none',
+                  background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
+                  color: '#ffffff', fontSize: '1rem', fontWeight: 600,
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  opacity: isProcessing ? 0.7 : 1,
+                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.5)',
+                }}
               >
-                <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                  {isProcessing ? "Sending..." : "Confirm Payment"}
-                </span>
-              </Button>
+                {isProcessing ? "Sending..." : "Confirm Payment"}
+              </button>
             </div>
           </div>
         </DialogContent>
