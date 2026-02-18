@@ -29,7 +29,7 @@ export function LoadingScreen({ userName }: LoadingScreenProps) {
         }}
       >
         <img
-          src="/Ewalletlogo.png"
+          src="/Loading.gif"
           alt="Loading..."
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
