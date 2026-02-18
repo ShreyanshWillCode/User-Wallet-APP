@@ -1,5 +1,3 @@
-import ewalletLogo from '../logo/Ewalletlogo.png';
-
 interface LoadingScreenProps {
   userName?: string;
 }
@@ -31,7 +29,7 @@ export function LoadingScreen({ userName }: LoadingScreenProps) {
         }}
       >
         <img
-          src={ewalletLogo}
+          src="/Ewalletlogo.png"
           alt="Loading..."
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
