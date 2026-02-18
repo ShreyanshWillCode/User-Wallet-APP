@@ -111,6 +111,16 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
     }).format(value);
   };
 
+  // Calculate processing fee based on payment method (Razorpay rates)
+  const getProcessingFee = (method: string, amt: number): number => {
+    switch (method) {
+      case 'UPI':         return amt > 0 ? 3 : 0;      // ₹3 flat per UPI payout
+      case 'Phone / IMPS': return amt > 0 ? 5 : 0;    // ₹5 flat per IMPS payout
+      case 'Wallet':      return 0;                    // Free for internal wallet transfers
+      default:            return 0;
+    }
+  };
+
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-md mx-auto">
@@ -245,6 +255,14 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                   {formatCurrency(parseInt(amount))}
                 </span>
               </div>
+              {/* Fee note for non-wallet methods */}
+              {paymentMethod !== 'Wallet' && (
+                <div style={{ backgroundColor: '#ede9fe', borderRadius: '8px', padding: '8px 12px' }}>
+                  <span style={{ color: '#6d28d9', fontSize: '0.82rem' }}>
+                    ⚡ Razorpay {paymentMethod} payout fee applies
+                  </span>
+                </div>
+              )}
 
               {/* Payment Method */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -260,7 +278,11 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
               {/* Processing Fee */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#374151', fontSize: '1.05rem' }}>Processing Fee:</span>
-                <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>₹0</span>
+                <span style={{ color: getProcessingFee(paymentMethod, parseInt(amount)) > 0 ? '#dc2626' : '#111827', fontSize: '1.05rem', fontWeight: 600 }}>
+                  {getProcessingFee(paymentMethod, parseInt(amount)) > 0
+                    ? `+ ₹${getProcessingFee(paymentMethod, parseInt(amount))}`
+                    : '₹0 (Free)'}
+                </span>
               </div>
 
               {/* Divider + Total */}
@@ -268,7 +290,7 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>Total:</span>
                   <span style={{ color: '#111827', fontSize: '1.15rem', fontWeight: 700 }}>
-                    {formatCurrency(parseInt(amount))}
+                    {formatCurrency(parseInt(amount) + getProcessingFee(paymentMethod, parseInt(amount)))}
                   </span>
                 </div>
               </div>
