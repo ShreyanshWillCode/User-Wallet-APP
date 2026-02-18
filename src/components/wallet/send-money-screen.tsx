@@ -30,6 +30,7 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [recipientName, setRecipientName] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Wallet");
 
   // Mock recent contacts
   const recentContacts: Contact[] = [
@@ -57,10 +58,13 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
     // Simple validation - in real app, this would check with backend
     if (value.includes('@')) {
       setRecipientName('UPI User');
+      setPaymentMethod('UPI');
     } else if (value.startsWith('+91') || value.match(/^\d+$/)) {
       setRecipientName('Phone User');
+      setPaymentMethod('Phone / IMPS');
     } else {
       setRecipientName('Wallet User');
+      setPaymentMethod('Wallet');
     }
   };
 
@@ -249,7 +253,7 @@ export function SendMoneyScreen({ onBack, onSuccess, currentBalance }: SendMoney
                   <div style={{ width: '24px', height: '24px', backgroundColor: '#7c3aed', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CheckCircle style={{ width: '14px', height: '14px', color: '#ffffff' }} />
                   </div>
-                  <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>UPI</span>
+                  <span style={{ color: '#111827', fontSize: '1.05rem', fontWeight: 600 }}>{paymentMethod}</span>
                 </div>
               </div>
 
