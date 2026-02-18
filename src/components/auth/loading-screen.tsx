@@ -12,7 +12,7 @@ export function LoadingScreen({ userName }: LoadingScreenProps) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #09092e 0%, #1a0050 50%, #09092e 100%)',
+        background: '#ffffff',
         zIndex: 9999,
       }}
     >
@@ -23,9 +23,9 @@ export function LoadingScreen({ userName }: LoadingScreenProps) {
           height: '220px',
           borderRadius: '50%',
           overflow: 'hidden',
-          boxShadow: '0 0 60px rgba(124, 58, 237, 0.6)',
+          boxShadow: '0 0 60px rgba(124, 58, 237, 0.2)',
           marginBottom: '32px',
-          border: '3px solid rgba(124, 58, 237, 0.4)',
+          border: '3px solid rgba(124, 58, 237, 0.1)',
         }}
       >
         <img
@@ -37,13 +37,13 @@ export function LoadingScreen({ userName }: LoadingScreenProps) {
 
       {/* Welcome text */}
       {userName && (
-        <p style={{ color: '#c4b5fd', fontSize: '1.1rem', marginBottom: '8px', letterSpacing: '0.05em' }}>
+        <p style={{ color: '#7c3aed', fontSize: '1.1rem', marginBottom: '8px', letterSpacing: '0.05em', fontWeight: 600 }}>
           Welcome back,
         </p>
       )}
       <h1
         style={{
-          color: '#ffffff',
+          color: '#1f2937',
           fontSize: '1.8rem',
           fontWeight: 700,
           marginBottom: '32px',
